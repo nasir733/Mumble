@@ -1,18 +1,46 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import '../styles/components/NotificationPage.css';
 
 import { Card } from '../common';
 import { Notification, Page } from '../components';
 import { useDispatch, useSelector } from 'react-redux';
 import { getNotifications } from '../actions/notificationsActions';
+import { w3cwebsocket } from 'websocket';
+import { func } from 'prop-types';
 
 function NotificationsPage() {
-  const { notifications } = useSelector((state) => state.notifications);
+  const { notifications } = useSelector((state) => state.notifications.notifications);
+  const chatSocket = useRef(null);
   const dispatch = useDispatch();
+  const setupWebsocket = () => {
+    console.log('seting up notifications websocket ');
+    chatSocket.current = new w3cwebsocket(
+      `${process.env.REACT_APP_WEBSOCKET_ENDPOINT}/?token=${localStorage.getItem('access')}`,
+    );
+  };
+  const onOpen = () => {
+    console.log('chatsocket opened ');
+    chatSocket.current.send(
+      JSON.stringify({
+        command: 'get_notifications',
+      }),
+    );
+    console.log('sent the chat socket message');
+  };
+  const onMessage = (message) => {
+    console.log('got websocket message');
+    let data = JSON.parse(message.data);
+
+    dispatch(getNotifications(data));
+    console.log(data);
+    // console.log(message);
+  };
 
   useEffect(() => {
-    dispatch(getNotifications());
-  }, [dispatch]);
+    setupWebsocket();
+    chatSocket.current.onopen = onOpen;
+    chatSocket.current.onmessage = onMessage;
+  }, []);
 
   return (
     <Page singleContent={true}>

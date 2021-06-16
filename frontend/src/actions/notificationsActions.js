@@ -17,11 +17,10 @@ export const createActionPayload = (type, error) => ({
     error.response && error.response.data.detail ? error.response.data.detail : error.message,
 });
 
-export const getNotifications = () => async (dispatch) => {
+export const getNotifications = (notifications) => async (dispatch) => {
   try {
     dispatch({ type: NOTIFICATIONS_REQUEST });
 
-    const notifications = await NotificationsService.getNotifications();
     dispatch({
       type: NOTIFICATIONS_SUCCESS,
       payload: notifications,
